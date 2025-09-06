@@ -1,0 +1,46 @@
+{
+  "name": "eco-frontend",
+  "version": "2.0.0",
+  "description": "Frontend web para el sistema ECO de generación de informes ecocardiográficos",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "serve": "npx http-server -p 8080 -c-1",
+    "dev": "npx live-server --port=8080 --no-browser",
+    "build": "echo 'No build process needed - vanilla HTML/CSS/JS'",
+    "test": "echo 'Open index.html in browser to test'",
+    "validate": "npx html-validate index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daquarti/eco-frontend.git"
+  },
+  "keywords": [
+    "medical",
+    "echocardiography",
+    "reports",
+    "frontend",
+    "healthcare",
+    "html",
+    "javascript",
+    "css"
+  ],
+  "author": "ECO Team",
+  "license": "MIT",
+  "homepage": "https://eco3.onrender.com",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11"
+  ],
+  "devDependencies": {},
+  "dependencies": {},
+  "config": {
+    "api_base": "https://eco3.onrender.com",
+    "max_files": 50,
+    "supported_formats": [".docx", ".doc"]
+  }
+}

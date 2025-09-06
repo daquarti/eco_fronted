@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECO Frontend - Generador de Informes Médicos</title>
+    <meta name="description" content="Frontend para el sistema ECO de generación de informes ecocardiográficos">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
+    
+    <style>
+        :root {
+            --primary-color: #4facfe;
+            --primary-dark: #2196f3;
+            --secondary-color: #43e97b;
+            --secondary-dark: #38f9d7;
+            --error-color: #ff6b6b;
+            --success-color: #43e97b;
+            --warning-color: #ffeaa7;
+            --text-color: #333;
+            --text-light: #666;
+            --bg-light: #f8f9fa;
+            --border-color: #e0e0e0;
+            --shadow: 0 20px 40px rgba(0,0,0,0.1);
+            --shadow-hover: 0 5px 15px rgba(79, 172, 254, 0.3);
+            --border-radius: 15px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .header .api-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed var(--border-color);
+            transition: var(--transition);
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary-color);
+            background: #f0f8ff;
+        }
+
+        .upload-section h2 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-section .description {
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 15px 25px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: var(--transition);
+            font-weight: 500;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .file-input-label:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .file-list {
+            margin: 20px 0;
+            min-height: 50px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .file-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .file-item .file-size {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 233, 123, 0.3);
+        }
+
+        .process-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            border: 1px solid var(--warning-color);
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color) 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .api-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .api-status.online {
+            background: var(--success-color);
+        }
+
+        .api-status.offline {
+            background: var(--error-color);
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .download-link:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-light);
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { margin: 0; border-radius: var(--border-radius); }
+            .main-content { padding: 20px; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 2rem; }
+            .tabs { flex-direction: column; }
+            .api-status { position: static; margin-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="apiStatus" class="api-status offline">🔴 Conectando...</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🏥 ECO Frontend</h1>
+            <p class="subtitle">Generador de Informes Ecocardiográficos</p>
+            <div id="apiInfo" class="api-info">📡 Conectando con API...</div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('single')">
+                    📄 Archivo Individual
+                </div>
+                <div class="tab" onclick="switchTab('multiple')">
+                    📦 Procesamiento por Lotes
+                </div>
+            </div>
+
+            <!-- Single File Upload -->
+            <div id="single-content" class="tab-content active">
+                <div class="upload-section">
+                    <h2>
+                        <span>📄</span>
+                        Procesamiento Individual
+                    </h2>
+                    <p class="description">
+                        Selecciona un archivo .docx o .doc del equipo ecocardiográfico para generar un informe médico automatizado
+                    </p>
+                    
+                    <div class="file-input-wrapper">
+                        <input type="file" id="singleFile" class="file-input" accept=".docx,.doc" onchange="handleSingleFile(this)">
+                        <label for="singleFile" class="file-input-label">
+                            📁 Seleccionar Archivo (.docx, .doc)
+                        </label>
+                    </div>
+                    
+                    <div id="singleFileList" class="file-list">
+                        <p style="color: #999; text-align: center;">Ningún archivo seleccionado</p>
+                    </div>
+                    
+                    <button id="singleProcessBtn" class="process-btn" onclick="processSingleFile()" disabled>
+                        🚀 Generar Informe Médico
+                    </button>
+                    
+                    <div class="progress-bar" id="singleProgress" style="display: none;">
+                        <div class="progress-fill"></div>
+                    </div>
+                    
+                    <div id="singleStatus" class="status" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Multiple Files Upload -->
+            <div id="multiple-content" class="tab-content">
+                <div class="upload-section">
+                    <h2>
+                        <span>📦</span>
+                        Procesamiento por Lotes
+                    </h2>
+                    <p class="description">
+                        Selecciona hasta 50 archivos .docx o .doc para procesamiento masivo. Recibirás un archivo ZIP con todos los informes generados.
+                    </p>
+                    
+                    <div class="file-input-wrapper">
+                        <input type="file" id="multipleFiles" class="file-input" accept=".docx,.doc" multiple onchange="handleMultipleFiles(this)">
+                        <label for="multipleFiles" class="file-input-label">
+                            📁 Seleccionar Múltiples Archivos (.docx, .doc)
+                        </label>
+                    </div>
+                    
+                    <div id="multipleFileList" class="file-list">
+                        <p style="color: #999; text-align: center;">Ningún archivo seleccionado</p>
+                    </div>
+                    
+                    <button id="multipleProcessBtn" class="process-btn" onclick="processMultipleFiles()" disabled>
+                        🚀 Generar Informes en Lote (ZIP)
+                    </button>
+                    
+                    <div class="progress-bar" id="multipleProgress" style="display: none;">
+                        <div class="progress-fill"></div>
+                    </div>
+                    
+                    <div id="multipleStatus" class="status" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>
+                🔗 <a href="https://eco3.onrender.com/docs" target="_blank">Documentación API</a> | 
+                💻 <a href="https://github.com/daquarti/eco" target="_blank">Backend Repository</a> | 
+                🏥 Sistema ECO v2.0
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_BASE: 'https://eco3.onrender.com',
+            API_CHECK_INTERVAL: 10000, // 10 seconds
+            MAX_FILES: 50,
+            SUPPORTED_FORMATS: ['.docx', '.doc']
+        };
+
+        // Global state
+        let selectedSingleFile = null;
+        let selectedMultipleFiles = [];
+
+        // Utility functions
+        function formatFileSize(bytes) {
+            return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+        }
+
+        function showStatus(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `status ${type}`;
+            element.innerHTML = message;
+        }
+
+        function hideStatus(elementId) {
+            document.getElementById(elementId).style.display = 'none';
+        }
+
+        function setProgress(elementId, percent) {
+            const progressBar = document.getElementById(elementId);
+            const progressFill = progressBar.querySelector('.progress-fill');
+            progressBar.style.display = 'block';
+            progressFill.style.width = `${percent}%`;
+        }
+
+        function hideProgress(elementId) {
+            const progressBar = document.getElementById(elementId);
+            progressBar.style.display = 'none';
+            progressBar.querySelector('.progress-fill').style.width = '0%';
+        }
+
+        // API functions
+        async function checkApiStatus() {
+            const apiInfo = document.getElementById('apiInfo');
+            const apiStatus = document.getElementById('apiStatus');
+            
+            apiInfo.innerHTML = `📡 API: Producción - ${CONFIG.API_BASE}`;
+            
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}/`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    apiStatus.className = 'api-status online';
+                    apiStatus.innerHTML = '🟢 API Conectada';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                apiStatus.className = 'api-status offline';
+                apiStatus.innerHTML = '🔴 API Desconectada';
+                console.warn('API connection failed:', error.message);
+            }
+        }
+
+        // Tab functions
+        function switchTab(tab) {
+            // Clear any previous states
+            hideStatus('singleStatus');
+            hideStatus('multipleStatus');
+            hideProgress('singleProgress');
+            hideProgress('multipleProgress');
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`${tab}-content`).classList.add('active');
+        }
+
+        // File handling functions
+        function handleSingleFile(input) {
+            const file = input.files[0];
+            const fileList = document.getElementById('singleFileList');
+            const processBtn = document.getElementById('singleProcessBtn');
+            
+            if (file) {
+                selectedSingleFile = file;
+                fileList.innerHTML = `
+                    <div class="file-item">
+                        <span>📄</span>
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">${formatFileSize(file.size)}</span>
+                    </div>
+                `;
+                processBtn.disabled = false;
+            } else {
+                selectedSingleFile = null;
+                fileList.innerHTML = '<p style="color: #999; text-align: center;">Ningún archivo seleccionado</p>';
+                processBtn.disabled = true;
+            }
+            
+            hideStatus('singleStatus');
+        }
+
+        function handleMultipleFiles(input) {
+            const files = Array.from(input.files);
+            const fileList = document.getElementById('multipleFileList');
+            const processBtn = document.getElementById('multipleProcessBtn');
+            
+            if (files.length > 0) {
+                if (files.length > CONFIG.MAX_FILES) {
+                    alert(`Máximo ${CONFIG.MAX_FILES} archivos permitidos`);
+                    input.value = '';
+                    return;
+                }
+                
+                selectedMultipleFiles = files;
+                fileList.innerHTML = files.map(file => `
+                    <div class="file-item">
+                        <span>📄</span>
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">${formatFileSize(file.size)}</span>
+                    </div>
+                `).join('');
+                processBtn.disabled = false;
+            } else {
+                selectedMultipleFiles = [];
+                fileList.innerHTML = '<p style="color: #999; text-align: center;">Ningún archivo seleccionado</p>';
+                processBtn.disabled = true;
+            }
+            
+            hideStatus('multipleStatus');
+        }
+
+        // Processing functions
+        async function processSingleFile() {
+            if (!selectedSingleFile) return;
+            
+            const processBtn = document.getElementById('singleProcessBtn');
+            
+            showStatus('singleStatus', 'loading', '⏳ Procesando archivo...');
+            setProgress('singleProgress', 30);
+            processBtn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedSingleFile);
+                
+                const response = await fetch(`${CONFIG.API_BASE}/generar_informe`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    setProgress('singleProgress', 100);
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const filename = response.headers.get('content-disposition')?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)?.[1]?.replace(/"/g, '') || 'informe.docx';
+                    
+                    showStatus('singleStatus', 'success', `
+                        ✅ ¡Informe generado exitosamente!
+                        <a href="${url}" download="${filename}" class="download-link">
+                            📥 Descargar ${filename}
+                        </a>
+                    `);
+                } else {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.detail || `Error ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus('singleStatus', 'error', `❌ Error: ${error.message}`);
+            } finally {
+                processBtn.disabled = false;
+                setTimeout(() => hideProgress('singleProgress'), 2000);
+            }
+        }
+
+        async function processMultipleFiles() {
+            if (selectedMultipleFiles.length === 0) return;
+            
+            const processBtn = document.getElementById('multipleProcessBtn');
+            
+            showStatus('multipleStatus', 'loading', `⏳ Procesando ${selectedMultipleFiles.length} archivos...`);
+            setProgress('multipleProgress', 30);
+            processBtn.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                selectedMultipleFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+                
+                const response = await fetch(`${CONFIG.API_BASE}/generar_informes_multiples`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    setProgress('multipleProgress', 100);
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const filename = 'informes_generados.zip';
+                    
+                    showStatus('multipleStatus', 'success', `
+                        ✅ ¡${selectedMultipleFiles.length} informes generados exitosamente!
+                        <a href="${url}" download="${filename}" class="download-link">
+                            📥 Descargar ZIP con todos los informes
+                        </a>
+                    `);
+                } else {
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.detail || `Error ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showStatus('multipleStatus', 'error', `❌ Error: ${error.message}`);
+            } finally {
+                processBtn.disabled = false;
+                setTimeout(() => hideProgress('multipleProgress'), 2000);
+            }
+        }
+
+        // Initialize application
+        function init() {
+            checkApiStatus();
+            setInterval(checkApiStatus, CONFIG.API_CHECK_INTERVAL);
+            
+            console.log('ECO Frontend initialized');
+            console.log('API Base:', CONFIG.API_BASE);
+        }
+
+        // Start application when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
