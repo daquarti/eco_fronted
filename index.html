@@ -332,6 +332,10 @@
         <button class="process-button" id="processButton">
             🚀 Generar Informes
         </button>
+        
+        <button class="process-button" id="debugButton" style="background: #6b7280;">
+            🔍 Debug Archivos
+        </button>
 
         <div class="progress-bar" id="progressBar">
             <div class="progress-fill" id="progressFill"></div>
@@ -353,6 +357,7 @@
         const folderButton = document.getElementById('folderButton');
         const selectedFilesDiv = document.getElementById('selectedFiles');
         const processButton = document.getElementById('processButton');
+        const debugButton = document.getElementById('debugButton');
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const result = document.getElementById('result');
@@ -410,6 +415,7 @@
             
             if (selectedFiles.length > 0) {
                 processButton.style.display = 'block';
+                debugButton.style.display = 'block';
                 processButton.textContent = selectedFiles.length === 1 
                     ? '🚀 Generar Informe' 
                     : `🚀 Generar ${selectedFiles.length} Informes`;
@@ -438,6 +444,7 @@
 
         // Process files
         processButton.addEventListener('click', processFiles);
+        debugButton.addEventListener('click', debugFiles);
 
         async function processFiles() {
             if (selectedFiles.length === 0) return;
@@ -554,6 +561,37 @@
             result.className = `result ${type}`;
             result.innerHTML = message;
             result.style.display = 'block';
+        }
+
+        async function debugFiles() {
+            if (selectedFiles.length === 0) return;
+
+            try {
+                const formData = new FormData();
+                selectedFiles.forEach(file => formData.append('files', file));
+                
+                const response = await fetch(`${API_URL}/debug_files`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const debugData = await response.json();
+                    showResult('success', 
+                        `🔍 DEBUG INFO:\n` +
+                        `Total archivos: ${debugData.total_files}\n` +
+                        `Archivos válidos: ${debugData.valid_files}\n` +
+                        `Archivos:\n${debugData.files.map(f => 
+                            `  • ${f.filename} (${f.content_type}) - ${f.size} bytes`
+                        ).join('\n')}`
+                    );
+                } else {
+                    const errorData = await response.text();
+                    showResult('error', `❌ Debug Error: ${errorData}`);
+                }
+            } catch (error) {
+                showResult('error', `❌ Debug Failed: ${error.message}`);
+            }
         }
 
         function resetUI() {
