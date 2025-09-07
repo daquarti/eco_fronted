@@ -404,6 +404,18 @@
         });
 
         function handleFiles(files) {
+            // Debug: Log file information
+            console.log('handleFiles called with:', files.length, 'files');
+            Array.from(files).forEach((file, i) => {
+                console.log(`File ${i}:`, {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    lastModified: file.lastModified,
+                    webkitRelativePath: file.webkitRelativePath
+                });
+            });
+            
             // Filter only .doc and .docx files
             const validFiles = Array.from(files).filter(file => {
                 const ext = file.name.toLowerCase();
