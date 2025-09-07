@@ -460,11 +460,18 @@
         async function processSingleFile(formData) {
             try {
                 updateProgress(30);
+                
+                // Create AbortController with extended timeout for .doc processing
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+                
                 const response = await fetch(`${API_URL}/generar_informe`, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
-
+                
+                clearTimeout(timeoutId);
                 updateProgress(80);
 
                 if (response.ok) {
@@ -480,7 +487,11 @@
                     showResult('error', `❌ Error: ${errorData}`);
                 }
             } catch (error) {
-                showResult('error', `❌ Error de conexión: ${error.message}`);
+                if (error.name === 'AbortError') {
+                    showResult('error', '❌ Timeout: El procesamiento tardó demasiado (>5 min). Intenta con menos archivos o archivos más pequeños.');
+                } else {
+                    showResult('error', `❌ Error de conexión: ${error.message}`);
+                }
             } finally {
                 resetUI();
             }
@@ -489,11 +500,18 @@
         async function processMultipleFiles(formData) {
             try {
                 updateProgress(30);
+                
+                // Create AbortController with extended timeout for .doc processing
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+                
                 const response = await fetch(`${API_URL}/generar_informes_multiples`, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
-
+                
+                clearTimeout(timeoutId);
                 updateProgress(80);
 
                 if (response.ok) {
@@ -507,7 +525,11 @@
                     showResult('error', `❌ Error: ${errorData}`);
                 }
             } catch (error) {
-                showResult('error', `❌ Error de conexión: ${error.message}`);
+                if (error.name === 'AbortError') {
+                    showResult('error', '❌ Timeout: El procesamiento tardó demasiado (>5 min). Intenta con menos archivos o archivos más pequeños.');
+                } else {
+                    showResult('error', `❌ Error de conexión: ${error.message}`);
+                }
             } finally {
                 resetUI();
             }
