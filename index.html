@@ -455,12 +455,13 @@
 
             const formData = new FormData();
             
+            // Always use single file processing to avoid browser timeout issues
             if (selectedFiles.length === 1) {
                 formData.append('file', selectedFiles[0]);
                 await processSingleFile(formData);
             } else {
-                selectedFiles.forEach(file => formData.append('files', file));
-                await processMultipleFiles(formData);
+                // Process files one by one to avoid timeout
+                await processMultipleFilesSeparately();
             }
         }
 
@@ -592,6 +593,77 @@
             } catch (error) {
                 showResult('error', `❌ Debug Failed: ${error.message}`);
             }
+        }
+
+        async function processMultipleFilesSeparately() {
+            const results = [];
+            const errors = [];
+            
+            processButton.disabled = true;
+            progressBar.style.display = 'block';
+            
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const progress = (i / selectedFiles.length) * 90; // Reserve 10% for final step
+                updateProgress(progress);
+                
+                showResult('success', `📄 Procesando archivo ${i + 1}/${selectedFiles.length}: ${file.name}`);
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes per file
+                    
+                    const response = await fetch(`${API_URL}/generar_informe`, {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const filename = file.name.replace(/\.(doc|docx)$/i, '_informe.docx');
+                        downloadFile(blob, filename);
+                        results.push(filename);
+                        showResult('success', `✅ ${file.name} → ${filename}`);
+                    } else {
+                        const errorData = await response.text();
+                        errors.push(`${file.name}: ${errorData}`);
+                        showResult('error', `❌ Error en ${file.name}: ${errorData}`);
+                    }
+                } catch (error) {
+                    const errorMsg = error.name === 'AbortError' 
+                        ? 'Timeout (>2 min)' 
+                        : error.message;
+                    errors.push(`${file.name}: ${errorMsg}`);
+                    showResult('error', `❌ Error en ${file.name}: ${errorMsg}`);
+                }
+                
+                // Small delay between files
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            updateProgress(100);
+            
+            // Show final results
+            const successCount = results.length;
+            const errorCount = errors.length;
+            
+            if (successCount > 0 && errorCount === 0) {
+                showResult('success', `🎉 ${successCount} informes generados exitosamente`);
+            } else if (successCount > 0) {
+                showResult('success', `⚠️ ${successCount} exitosos, ${errorCount} errores. Ver consola para detalles.`);
+                console.log('Errores:', errors);
+            } else {
+                showResult('error', `❌ Todos los archivos fallaron. Ver consola para detalles.`);
+                console.log('Errores:', errors);
+            }
+            
+            resetUI();
         }
 
         function resetUI() {
